@@ -1,4 +1,6 @@
 const { Schema, model } = require('mongoose');
+const validator = require('validator');
+const bcrypt = require('bcryptjs');
 
 const userSchema = new Schema({
   username: {
@@ -12,13 +14,8 @@ const userSchema = new Schema({
     type: String,
     required: [true, 'Por favor ingrese un e-mail'],
     unique: true,
-    validate: {
-      validator: function(mail){
-        const emailRegex = /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
-        return emailRegex.test(mail);
-      },
-      message: 'El mail no es válido'
-    }
+    lowercase: true,
+    validate: [validator.isEmail, 'Por favor ingrese un mail válido']
   },
   password: {
     type: String,
@@ -44,6 +41,13 @@ const userSchema = new Schema({
     },
     default: 'user'
   }
+})
+
+userSchema.pre('save', async function(next){
+  if(!this.isModified('password')) return next();
+  this.password = await bcrypt.hash(this.password, 10);
+  this.confirmPassword = undefined;
+  next();
 })
 
 const User = model('User', userSchema);
