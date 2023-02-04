@@ -21,7 +21,8 @@ const userSchema = new Schema({
     type: String,
     required: [true, 'Por favor ingrese una contraseña'],
     minlength: 8,
-    maxlength: 30
+    maxlength: 30,
+    select: false
   },
   confirmPassword: {
     type: String,
@@ -48,7 +49,11 @@ userSchema.pre('save', async function(next){
   this.password = await bcrypt.hash(this.password, 10);
   this.confirmPassword = undefined;
   next();
-})
+});
+
+userSchema.methods.comparePassword = async function(candidatePassword, userPassword){
+  return await bcrypt.compare(candidatePassword, userPassword);
+};
 
 const User = model('User', userSchema);
 
