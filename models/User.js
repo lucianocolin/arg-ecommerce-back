@@ -41,7 +41,8 @@ const userSchema = new Schema({
       message: 'El tipo de rol que ingresó no existe!'
     },
     default: 'user'
-  }
+  },
+  passwordChangeAt: Date
 })
 
 userSchema.pre('save', async function(next){
@@ -54,6 +55,14 @@ userSchema.pre('save', async function(next){
 userSchema.methods.comparePassword = async function(candidatePassword, userPassword){
   return await bcrypt.compare(candidatePassword, userPassword);
 };
+
+userSchema.methods.changedPasswordAfter = function(JWTTime){
+  if(this.passwordChangeAt){
+    const changedTimestamp = parseInt(this.passwordChangeAt.getTime() / 1000);
+    return JWTTime < changedTimestamp;
+  };
+  return false;
+}
 
 const User = model('User', userSchema);
 
